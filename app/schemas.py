@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class AddressBase(BaseModel):
@@ -8,10 +8,8 @@ class AddressBase(BaseModel):
 
 
 class Address(AddressBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
-
-    class Config:
-        from_attributes = True
 
 
 class AddressCreate(AddressBase):
