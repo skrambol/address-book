@@ -16,14 +16,11 @@ def get_db():
         db.close()
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
 @app.get("/addresses/")
-async def get_address(db: Session = Depends(get_db)):
-    addresses = crud.get_addresses(db)
+async def get_address_in_radius(
+    lat: float, long: float, distance: float, db: Session = Depends(get_db)
+):
+    addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
 
     return addresses
 
@@ -39,5 +36,4 @@ async def create_address(address: schemas.AddressCreate, db: Session = Depends(g
     try:
         return crud.create_address(db, address)
     except ValueError as e:
-        print(e)
         raise HTTPException(status_code=400, detail=str(e))

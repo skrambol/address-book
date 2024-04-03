@@ -33,6 +33,7 @@ def override_get_db():
 
         yield database
     finally:
+        # delete db before closing
         Base.metadata.drop_all(bind=engine)
         database.close()
 
@@ -40,15 +41,38 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
-def test_get_all_addresses():
-    response = client.get("/addresses/")
-    data = response.json()
+class TestGetAddressInRadius:
+    def test_get_no_addresses_in_radius(self):
+        response = client.get(f"/addresses/?lat=33&long=22&distance=50")
+        data = response.json()
 
-    assert response.status_code == 200
-    assert type(data) == list
-    assert data[0]["name"] == NEW_ADDRESS["name"]
-    assert data[0]["latitude"] == NEW_ADDRESS["latitude"]
-    assert data[0]["longitude"] == NEW_ADDRESS["longitude"]
+        assert response.status_code == 200
+        assert type(data) == list
+        assert len(data) == 0
+
+    def test_same_coordinates_and_zero_distance(self):
+        response = client.get(
+            f"/addresses/?lat={NEW_ADDRESS['latitude']}&long={NEW_ADDRESS['longitude']}&distance=0"
+        )
+        data = response.json()
+
+        assert response.status_code == 200
+        assert type(data) == list
+        assert len(data) == 1
+        assert data[0]["name"] == NEW_ADDRESS["name"]
+        assert data[0]["latitude"] == NEW_ADDRESS["latitude"]
+        assert data[0]["longitude"] == NEW_ADDRESS["longitude"]
+
+    def test_get_addresses_in_radius(self):
+        response = client.get(f"/addresses/?lat=2.5&long=3&distance=50")
+        data = response.json()
+
+        assert response.status_code == 200
+        assert type(data) == list
+        assert data[0]["name"] == NEW_ADDRESS["name"]
+        assert data[0]["latitude"] == NEW_ADDRESS["latitude"]
+        assert data[0]["longitude"] == NEW_ADDRESS["longitude"]
+
 
 
 class TestCreateAddress:
