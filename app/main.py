@@ -12,6 +12,9 @@ app = FastAPI()
 
 
 def get_db():
+    """
+    creates the connection to the database
+    """
     db = SessionLocal()
     try:
         yield db
@@ -36,7 +39,8 @@ def get_addresses(
     if all(param is None for param in [lat, long, distance]):
         return db.query(models.Address).all()
 
-    # elif all(param is not None for param in [lat, long, distance]): # mypy sees this as an error
+    # mypy is unsure if lat, long, distance are really not None if using the condition below
+    # elif all(param is not None for param in [lat, long, distance]):
     elif lat is not None and long is not None and distance is not None:
         addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
         return addresses
@@ -88,7 +92,7 @@ def update_address(
 
     returns the updated details of the address
 
-    returns an error if there is no address with the given ID
+    returns an error if there is no address with the given ID, or there is a duplicate coordinate
     """
     try:
         logger.debug(address)

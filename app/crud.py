@@ -1,4 +1,5 @@
 from haversine import haversine
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from . import models, schemas
@@ -38,6 +39,8 @@ def is_in_radius(
     check if the distance of the two given coordinates is within
     the given radius
     """
+    distance = haversine(coordinates, starting_coordinates)
+    logger.debug(f"h({coordinates}, {starting_coordinates}) = {distance}; radius = {radius}")
     if haversine(coordinates, starting_coordinates) <= radius:
         return True
 
