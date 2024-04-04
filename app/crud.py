@@ -104,3 +104,7 @@ def update_address(db: Session, id: int, address: schemas.AddressUpdate):
         db.refresh(db_address)
 
     return db_address
+
+def delete_address(db: Session, id: int):
+    db.query(models.Address).filter_by(id=id).delete()
+    db.commit()

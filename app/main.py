@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -76,3 +76,10 @@ async def update_address(
 
         # re-raise all other integrity errors
         raise e
+
+@app.delete("/addresses/{id}", status_code=204)
+async def delete_address(
+    id: int, db: Session = Depends(get_db)
+):
+    crud.delete_address(db, id)
+    return None

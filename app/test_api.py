@@ -205,3 +205,17 @@ class TestUpdateAddress:
         assert data["latitude"] == payload["latitude"]
         assert data["longitude"] == payload["longitude"]
         assert data["id"] == id
+
+
+class TestDeleteAddress:
+    URL = "/addresses/"
+
+    def test_delete_non_existent_id(self):
+        response = client.delete(f"{self.URL}200")
+
+        assert response.status_code == 204
+
+    def test_delete_address(self):
+        response = client.delete(f"{self.URL}400")
+
+        assert response.status_code == 204
