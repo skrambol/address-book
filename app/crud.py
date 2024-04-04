@@ -4,16 +4,6 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 
 
-def get_address_by_coordinates(db: Session, latitude: float, longitude: float):
-    address = (
-        db.query(models.Address)
-        .filter_by(latitude=latitude, longitude=longitude)
-        .first()
-    )
-
-    return address
-
-
 def __get_addresses_in_radius(
     db: Session, latitude: float, longitude: float, distance: float
 ):
@@ -95,3 +85,16 @@ def create_address(db: Session, address: schemas.AddressCreate):
     db.commit()
     db.refresh(new_address)
     return new_address
+
+
+def update_address(db: Session, id: int, address: schemas.AddressUpdate):
+    db_address = db.get(models.Address, id)
+
+    if db_address:
+        db_address.name = address.name
+        db_address.latitude = address.latitude
+        db_address.longitude = address.longitude
+        db.commit()
+        db.refresh(db_address)
+
+        return db_address

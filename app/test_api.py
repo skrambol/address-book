@@ -138,3 +138,28 @@ class TestCreateAddress:
         assert data["latitude"] == payload["latitude"]
         assert data["longitude"] == payload["longitude"]
         assert "id" in data
+
+
+class TestUpdateAddress:
+    URL = "/addresses/"
+
+    def test_update_duplicate_coordinates(self):
+        id = 400
+        payload = {"name": "test", "latitude": 2.1, "longitude": 3.0}
+        response = client.put(f"{self.URL}{id}", json=payload)
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["detail"] == "duplicate coordinates"
+
+    def test_update_address(self):
+        id = 300
+        payload = {"name": "test", "latitude": 1.2, "longitude": 2.3}
+        response = client.put(f"{self.URL}{id}", json=payload)
+        data = response.json()
+
+        assert response.status_code == 200
+        assert data["name"] == payload["name"]
+        assert data["latitude"] == payload["latitude"]
+        assert data["longitude"] == payload["longitude"]
+        assert data["id"] == id

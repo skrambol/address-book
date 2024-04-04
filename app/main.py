@@ -38,3 +38,15 @@ async def create_address(address: schemas.AddressCreate, db: Session = Depends(g
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
         raise HTTPException(status_code=400, detail="duplicate coordinates")
+
+
+@app.put("/addresses/{id}")
+async def update_address(
+    id: int, address: schemas.AddressUpdate, db: Session = Depends(get_db)
+):
+    try:
+        return crud.update_address(db, id, address)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        raise HTTPException(status_code=400, detail="duplicate coordinates")
