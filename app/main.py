@@ -1,7 +1,9 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
-from . import crud, models, schemas
-from .database import SessionLocal, engine
+from sqlalchemy.exc import IntegrityError
+
+from app import crud, models, schemas
+from app.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -30,13 +32,9 @@ async def get_address_in_radius(
 
 @app.post("/addresses/")
 async def create_address(address: schemas.AddressCreate, db: Session = Depends(get_db)):
-    db_address = crud.get_address_by_coordinates(
-        db, address.latitude, address.longitude
-    )
-    if db_address:
-        raise HTTPException(status_code=400, detail="duplicate coordinates")
-
     try:
         return crud.create_address(db, address)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        raise HTTPException(status_code=400, detail="duplicate coordinates")

@@ -1,10 +1,13 @@
-from sqlalchemy import Integer
+from sqlalchemy import Integer, UniqueConstraint
 from sqlalchemy.orm import MappedColumn, mapped_column
 from .database import Base
 
 
 class Address(Base):
     __tablename__ = "addresses"
+    __table_args__ = (
+        UniqueConstraint("latitude", "longitude", name="unique_coordinates"),
+    )
 
     id = mapped_column(Integer, primary_key=True)
     name: MappedColumn[str]
