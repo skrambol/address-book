@@ -20,14 +20,27 @@ def get_db():
 
 @app.get("/addresses/")
 async def get_address_in_radius(
-    lat: float, long: float, distance: float, db: Session = Depends(get_db)
+    lat: float | None = None,
+    long: float | None = None,
+    distance: float | None = None,
+    db: Session = Depends(get_db),
 ):
-    try:
-        addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
-        return addresses
+    if all(param is None for param in [lat, long, distance]):
+        return db.query(models.Address).all()
 
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    # elif all(param is not None for param in [lat, long, distance]): # mypy sees this as an error
+    elif lat is not None and long is not None and distance is not None:
+        try:
+            addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
+            return addresses
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    else:
+        raise HTTPException(
+            status_code=422,
+            detail="lat, long, or distance is missing from query params",
+        )
 
 
 @app.post("/addresses/")

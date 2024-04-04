@@ -45,6 +45,20 @@ app.dependency_overrides[get_db] = override_get_db
 class TestGetAddressInRadius:
     URL = "/addresses/"
 
+    def test_no_params(self):
+        response = client.get(f"{self.URL}")
+        data = response.json()
+
+        assert response.status_code == 200
+        assert len(data) == 2
+
+    def test_missing_params(self):
+        response = client.get(f"{self.URL}?lat=0&long=0")
+        data = response.json()
+
+        assert response.status_code == 422
+        assert data["detail"] == "lat, long, or distance is missing from query params"
+
     def test_invalid_distance(self):
         response = client.get(f"{self.URL}?lat=33&long=22&distance=-0.1")
         data = response.json()
