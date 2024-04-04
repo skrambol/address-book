@@ -57,6 +57,15 @@ def is_in_radius(
 def get_addresses_in_radius(
     db: Session, coordinates: tuple[float, float], distance: float
 ):
+    if distance < 0:
+        raise ValueError("invalid distance. please enter non-negative values.")
+
+    if not models.Address.is_valid_latitude(coordinates[0]):
+        raise ValueError("invalid latitude. please enter from -90.0 to 90.0")
+
+    if not models.Address.is_valid_longitude(coordinates[1]):
+        raise ValueError("invalid longitude. please enter from -180.0 to 180.0")
+
     addresses = db.query(models.Address).all()
 
     # TODO: filter out in query for optimization
@@ -76,10 +85,10 @@ def get_addresses_in_radius(
 def create_address(db: Session, address: schemas.AddressCreate):
     new_address = models.Address(**address.model_dump())
 
-    if new_address.latitude < -90.0 or new_address.latitude > 90.0:
+    if not models.Address.is_valid_latitude(new_address.latitude):
         raise ValueError("invalid latitude. please enter from -90.0 to 90.0")
 
-    if new_address.longitude < -180.0 or new_address.longitude > 180.0:
+    if not models.Address.is_valid_longitude(new_address.longitude):
         raise ValueError("invalid longitude. please enter from -180.0 to 180.0")
 
     db.add(new_address)

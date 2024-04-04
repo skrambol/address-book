@@ -7,7 +7,8 @@ from app.database import Base
 from app.models import Address
 
 client = TestClient(app)
-NEW_ADDRESS = {"name": "my new address", "latitude": 2.1, "longitude": 3.0}
+ADDRESS1 = {"id": 300, "name": "my new address", "latitude": 2.1, "longitude": 3.0}
+ADDRESS2 = {"id": 400, "name": "my newer address", "latitude": 2.5, "longitude": 3.0}
 
 # setup db
 engine = create_engine(
@@ -26,8 +27,8 @@ def override_get_db():
     try:
         # setup db content
         Base.metadata.create_all(bind=engine)
-        new_address = Address(**NEW_ADDRESS)
-        database.add(new_address)
+        database.add(Address(**ADDRESS1))
+        database.add(Address(**ADDRESS2))
         database.commit()
         database.close()
 
@@ -42,8 +43,31 @@ app.dependency_overrides[get_db] = override_get_db
 
 
 class TestGetAddressInRadius:
+    URL = "/addresses/"
+
+    def test_invalid_distance(self):
+        response = client.get(f"{self.URL}?lat=33&long=22&distance=-0.1")
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["detail"] == "invalid distance. please enter non-negative values."
+
+    def test_invalid_latitude(self):
+        response = client.get(f"{self.URL}?lat=330&long=22&distance=0")
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["detail"] == "invalid latitude. please enter from -90.0 to 90.0"
+
+    def test_invalid_longitude(self):
+        response = client.get(f"{self.URL}?lat=33&long=220&distance=0")
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["detail"] == "invalid longitude. please enter from -180.0 to 180.0"
+
     def test_get_no_addresses_in_radius(self):
-        response = client.get(f"/addresses/?lat=33&long=22&distance=50")
+        response = client.get(f"{self.URL}?lat=33&long=22&distance=50")
         data = response.json()
 
         assert response.status_code == 200
@@ -52,33 +76,37 @@ class TestGetAddressInRadius:
 
     def test_same_coordinates_and_zero_distance(self):
         response = client.get(
-            f"/addresses/?lat={NEW_ADDRESS['latitude']}&long={NEW_ADDRESS['longitude']}&distance=0"
+            f"{self.URL}?lat={ADDRESS1['latitude']}&long={ADDRESS1['longitude']}&distance=0"
         )
         data = response.json()
 
         assert response.status_code == 200
         assert type(data) == list
         assert len(data) == 1
-        assert data[0]["name"] == NEW_ADDRESS["name"]
-        assert data[0]["latitude"] == NEW_ADDRESS["latitude"]
-        assert data[0]["longitude"] == NEW_ADDRESS["longitude"]
+        assert data[0]["name"] == ADDRESS1["name"]
+        assert data[0]["latitude"] == ADDRESS1["latitude"]
+        assert data[0]["longitude"] == ADDRESS1["longitude"]
 
     def test_get_addresses_in_radius(self):
-        response = client.get(f"/addresses/?lat=2.5&long=3&distance=50")
+        response = client.get(f"{self.URL}?lat=2.5&long=3&distance=50")
         data = response.json()
 
         assert response.status_code == 200
         assert type(data) == list
-        assert data[0]["name"] == NEW_ADDRESS["name"]
-        assert data[0]["latitude"] == NEW_ADDRESS["latitude"]
-        assert data[0]["longitude"] == NEW_ADDRESS["longitude"]
-
+        assert data[0]["name"] == ADDRESS1["name"]
+        assert data[0]["latitude"] == ADDRESS1["latitude"]
+        assert data[0]["longitude"] == ADDRESS1["longitude"]
+        assert data[1]["name"] == ADDRESS2["name"]
+        assert data[1]["latitude"] == ADDRESS2["latitude"]
+        assert data[1]["longitude"] == ADDRESS2["longitude"]
 
 
 class TestCreateAddress:
+    URL = "/addresses/"
+
     def test_create_duplicate_address(self):
-        payload = NEW_ADDRESS
-        response = client.post("/addresses/", json=payload)
+        payload = ADDRESS1
+        response = client.post(self.URL, json=payload)
         data = response.json()
 
         assert response.status_code == 400
@@ -86,7 +114,7 @@ class TestCreateAddress:
 
     def test_invalid_latitude(self):
         payload = {"name": "test", "latitude": 91.0, "longitude": 2.3}
-        response = client.post("/addresses/", json=payload)
+        response = client.post(self.URL, json=payload)
         data = response.json()
 
         assert response.status_code == 400
@@ -94,7 +122,7 @@ class TestCreateAddress:
 
     def test_invalid_longitude(self):
         payload = {"name": "test", "latitude": 1.2, "longitude": -180.1}
-        response = client.post("/addresses/", json=payload)
+        response = client.post(self.URL, json=payload)
         data = response.json()
 
         assert response.status_code == 400
@@ -102,7 +130,7 @@ class TestCreateAddress:
 
     def test_create_address(self):
         payload = {"name": "test", "latitude": 1.2, "longitude": 2.3}
-        response = client.post("/addresses/", json=payload)
+        response = client.post(self.URL, json=payload)
         data = response.json()
 
         assert response.status_code == 200

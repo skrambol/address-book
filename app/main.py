@@ -20,9 +20,12 @@ def get_db():
 async def get_address_in_radius(
     lat: float, long: float, distance: float, db: Session = Depends(get_db)
 ):
-    addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
+    try:
+        addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
+        return addresses
 
-    return addresses
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/addresses/")
