@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from loguru import logger
 
 from app import crud, models, schemas
 from app.database import SessionLocal, engine
@@ -61,6 +62,7 @@ def create_address(address: schemas.AddressCreate, db: Session = Depends(get_db)
     returns an error if there is a duplicate address from the input coordinates
     """
     try:
+        logger.debug(address)
         return crud.create_address(db, address)
     except IntegrityError as e:
         if "UNIQUE" in str(e):  # if unique constraint
@@ -89,6 +91,7 @@ def update_address(
     returns an error if there is no address with the given ID
     """
     try:
+        logger.debug(address)
         db_address = crud.update_address(db, id, address)
 
         if not db_address:
