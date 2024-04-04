@@ -143,6 +143,15 @@ class TestCreateAddress:
 class TestUpdateAddress:
     URL = "/addresses/"
 
+    def test_invalid_id(self):
+        id = 200
+        payload = {"name": "test", "latitude": 2.1, "longitude": 3.0}
+        response = client.put(f"{self.URL}{id}", json=payload)
+        data = response.json()
+
+        assert response.status_code == 404
+        assert data["detail"] == "id not found"
+
     def test_update_duplicate_coordinates(self):
         id = 400
         payload = {"name": "test", "latitude": 2.1, "longitude": 3.0}
@@ -151,6 +160,25 @@ class TestUpdateAddress:
 
         assert response.status_code == 400
         assert data["detail"] == "duplicate coordinates"
+
+    def test_update_invalid_latitude(self):
+        id = 400
+        payload = {"name": "test", "latitude": 310, "longitude": 3.0}
+        response = client.put(f"{self.URL}{id}", json=payload)
+        data = response.json()
+
+        assert response.status_code == 400
+        assert data["detail"] == "invalid latitude. please enter from -90.0 to 90.0"
+
+    def test_update_invalid_longitude(self):
+        id = 400
+        payload = {"name": "test", "latitude": 3, "longitude": -300}
+        response = client.put(f"{self.URL}{id}", json=payload)
+        data = response.json()
+
+        print(data)
+        assert response.status_code == 400
+        assert data["detail"] == "invalid longitude. please enter from -180.0 to 180.0"
 
     def test_update_address(self):
         id = 300

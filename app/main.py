@@ -37,7 +37,11 @@ async def create_address(address: schemas.AddressCreate, db: Session = Depends(g
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
-        raise HTTPException(status_code=400, detail="duplicate coordinates")
+        if "UNIQUE" in str(e):  # if unique constraint
+            raise HTTPException(status_code=400, detail="duplicate coordinates")
+
+        # re-raise all other integrity errors
+        raise e
 
 
 @app.put("/addresses/{id}")
@@ -45,8 +49,17 @@ async def update_address(
     id: int, address: schemas.AddressUpdate, db: Session = Depends(get_db)
 ):
     try:
-        return crud.update_address(db, id, address)
+        db_address = crud.update_address(db, id, address)
+
+        if not db_address:
+            raise HTTPException(status_code=404, detail="id not found")
+
+        return db_address
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
-        raise HTTPException(status_code=400, detail="duplicate coordinates")
+        if "UNIQUE" in str(e):  # if unique constraint
+            raise HTTPException(status_code=400, detail="duplicate coordinates")
+
+        # re-raise all other integrity errors
+        raise e

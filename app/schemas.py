@@ -14,5 +14,6 @@ class Address(AddressBase):
 class AddressCreate(AddressBase):
     pass
 
+
 class AddressUpdate(AddressBase):
     pass
