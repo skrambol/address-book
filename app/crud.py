@@ -47,15 +47,6 @@ def is_in_radius(
 def get_addresses_in_radius(
     db: Session, coordinates: tuple[float, float], distance: float
 ):
-    if distance < 0:
-        raise ValueError("invalid distance. please enter non-negative values.")
-
-    if not models.Address.is_valid_latitude(coordinates[0]):
-        raise ValueError("invalid latitude. please enter from -90.0 to 90.0")
-
-    if not models.Address.is_valid_longitude(coordinates[1]):
-        raise ValueError("invalid longitude. please enter from -180.0 to 180.0")
-
     addresses = db.query(models.Address).all()
 
     # TODO: filter out in query for optimization
@@ -75,12 +66,6 @@ def get_addresses_in_radius(
 def create_address(db: Session, address: schemas.AddressCreate):
     new_address = models.Address(**address.model_dump())
 
-    if not models.Address.is_valid_latitude(new_address.latitude):
-        raise ValueError("invalid latitude. please enter from -90.0 to 90.0")
-
-    if not models.Address.is_valid_longitude(new_address.longitude):
-        raise ValueError("invalid longitude. please enter from -180.0 to 180.0")
-
     db.add(new_address)
     db.commit()
     db.refresh(new_address)
@@ -90,12 +75,6 @@ def create_address(db: Session, address: schemas.AddressCreate):
 def update_address(db: Session, id: int, address: schemas.AddressUpdate):
     db_address = db.get(models.Address, id)
 
-    if not models.Address.is_valid_latitude(address.latitude):
-        raise ValueError("invalid latitude. please enter from -90.0 to 90.0")
-
-    if not models.Address.is_valid_longitude(address.longitude):
-        raise ValueError("invalid longitude. please enter from -180.0 to 180.0")
-
     if db_address:
         db_address.name = address.name
         db_address.latitude = address.latitude
@@ -104,6 +83,7 @@ def update_address(db: Session, id: int, address: schemas.AddressUpdate):
         db.refresh(db_address)
 
     return db_address
+
 
 def delete_address(db: Session, id: int):
     db.query(models.Address).filter_by(id=id).delete()

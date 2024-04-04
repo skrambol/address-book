@@ -63,22 +63,22 @@ class TestGetAddressInRadius:
         response = client.get(f"{self.URL}?lat=33&long=22&distance=-0.1")
         data = response.json()
 
-        assert response.status_code == 400
-        assert data["detail"] == "invalid distance. please enter non-negative values."
+        assert response.status_code == 422
+        assert "detail" in data
 
     def test_invalid_latitude(self):
         response = client.get(f"{self.URL}?lat=330&long=22&distance=0")
         data = response.json()
 
-        assert response.status_code == 400
-        assert data["detail"] == "invalid latitude. please enter from -90.0 to 90.0"
+        assert response.status_code == 422
+        assert "detail" in data
 
     def test_invalid_longitude(self):
         response = client.get(f"{self.URL}?lat=33&long=220&distance=0")
         data = response.json()
 
-        assert response.status_code == 400
-        assert data["detail"] == "invalid longitude. please enter from -180.0 to 180.0"
+        assert response.status_code == 422
+        assert "detail" in data
 
     def test_get_no_addresses_in_radius(self):
         response = client.get(f"{self.URL}?lat=33&long=22&distance=50")
@@ -131,16 +131,16 @@ class TestCreateAddress:
         response = client.post(self.URL, json=payload)
         data = response.json()
 
-        assert response.status_code == 400
-        assert data["detail"] == "invalid latitude. please enter from -90.0 to 90.0"
+        assert response.status_code == 422
+        assert "detail" in data
 
     def test_invalid_longitude(self):
         payload = {"name": "test", "latitude": 1.2, "longitude": -180.1}
         response = client.post(self.URL, json=payload)
         data = response.json()
 
-        assert response.status_code == 400
-        assert data["detail"] == "invalid longitude. please enter from -180.0 to 180.0"
+        assert response.status_code == 422
+        assert "detail" in data
 
     def test_create_address(self):
         payload = {"name": "test", "latitude": 1.2, "longitude": 2.3}
@@ -181,8 +181,8 @@ class TestUpdateAddress:
         response = client.put(f"{self.URL}{id}", json=payload)
         data = response.json()
 
-        assert response.status_code == 400
-        assert data["detail"] == "invalid latitude. please enter from -90.0 to 90.0"
+        assert response.status_code == 422
+        assert "detail" in data
 
     def test_update_invalid_longitude(self):
         id = 400
@@ -190,9 +190,8 @@ class TestUpdateAddress:
         response = client.put(f"{self.URL}{id}", json=payload)
         data = response.json()
 
-        print(data)
-        assert response.status_code == 400
-        assert data["detail"] == "invalid longitude. please enter from -180.0 to 180.0"
+        assert response.status_code == 422
+        assert "detail" in data
 
     def test_update_address(self):
         id = 300

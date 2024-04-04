@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -19,10 +19,10 @@ def get_db():
 
 
 @app.get("/addresses/")
-async def get_address_in_radius(
-    lat: float | None = None,
-    long: float | None = None,
-    distance: float | None = None,
+async def get_addresses(
+    lat: float | None = schemas.LatitudeQuery,
+    long: float | None = schemas.LongitudeQuery,
+    distance: float | None = schemas.DistanceQuery,
     db: Session = Depends(get_db),
 ):
     if all(param is None for param in [lat, long, distance]):
@@ -30,11 +30,8 @@ async def get_address_in_radius(
 
     # elif all(param is not None for param in [lat, long, distance]): # mypy sees this as an error
     elif lat is not None and long is not None and distance is not None:
-        try:
-            addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
-            return addresses
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        addresses = crud.get_addresses_in_radius(db, (lat, long), distance)
+        return addresses
 
     else:
         raise HTTPException(
@@ -47,8 +44,6 @@ async def get_address_in_radius(
 async def create_address(address: schemas.AddressCreate, db: Session = Depends(get_db)):
     try:
         return crud.create_address(db, address)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
         if "UNIQUE" in str(e):  # if unique constraint
             raise HTTPException(status_code=400, detail="duplicate coordinates")
@@ -68,8 +63,6 @@ async def update_address(
             raise HTTPException(status_code=404, detail="id not found")
 
         return db_address
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
         if "UNIQUE" in str(e):  # if unique constraint
             raise HTTPException(status_code=400, detail="duplicate coordinates")
@@ -77,9 +70,8 @@ async def update_address(
         # re-raise all other integrity errors
         raise e
 
+
 @app.delete("/addresses/{id}", status_code=204)
-async def delete_address(
-    id: int, db: Session = Depends(get_db)
-):
+async def delete_address(id: int, db: Session = Depends(get_db)):
     crud.delete_address(db, id)
     return None
